@@ -1,26 +1,27 @@
 import csv
 from datetime import datetime, timedelta
 import os
-import urllib.request
-import io
 
 def actualizar_historico():
     nombre_archivo = "florida_pick3_pick4_historico.csv"
     
-    # Cargar registros previos para conservar la base histórica
     registros = {}
+    # Si ya existe el archivo, leemos lo que tenga
     if os.path.exists(nombre_archivo):
         with open(nombre_archivo, mode='r', encoding='utf-8') as f:
             reader = csv.reader(f)
             next(reader, None)
             for row in reader:
                 if len(row) >= 3:
-                    registros[row[0]] = (row[1].strip(), row[2].strip())
+                    # Si tiene los datos falsos anteriores, los dejamos vacíos para llenarlos bien
+                    if row[1] == "3 74 38 47":
+                        registros[row[0]] = ("", "")
+                    else:
+                        registros[row[0]] = (row[1], row[2])
 
-    # Rango oficial histórico desde 2010 hasta el día actual
+    # Generar el rango desde 2010 hasta hoy limpio
     inicio = datetime(2010, 1, 1)
     fin = datetime.now()
-
     curr = inicio
     while curr <= fin:
         fecha_str = curr.strftime('%Y-%m-%d')
@@ -28,18 +29,7 @@ def actualizar_historico():
             registros[fecha_str] = ("", "")
         curr += timedelta(days=1)
 
-    # Ejemplo de inserción automática de datos oficiales de la última semana
-    # (El script descargará e interpretará las líneas del PDF oficial de la Florida)
-    try:
-        url_pdf = "https://files.floridalottery.com/exptkt/p4.pdf"
-        req = urllib.request.Request(url_pdf, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req) as response:
-            pdf_data = response.read()
-            print("📄 Reporte oficial PDF descargado correctamente para validación.")
-    except Exception as e:
-        print(f"⚠️ Aviso al conectar con la fuente oficial: {e}")
-
-    # Guardar el archivo CSV actualizado y ordenado
+    # Guardar CSV limpio
     with open(nombre_archivo, mode='w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         writer.writerow(['Fecha', 'Dia', 'Noche'])
@@ -47,7 +37,7 @@ def actualizar_historico():
             dia, noche = registros[fecha]
             writer.writerow([fecha, dia, noche])
             
-    print(f"✅ Archivo '{nombre_archivo}' sincronizado y validado con éxito.")
+    print(f"✅ Archivo '{nombre_archivo}' limpiado y actualizado correctamente.")
 
 if __name__ == "__main__":
     actualizar_historico()
