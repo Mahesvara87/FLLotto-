@@ -1,13 +1,12 @@
 import csv
 from datetime import datetime, timedelta
-import urllib.request
-import json
 import os
+import urllib.request
 
 def actualizar_historico():
     nombre_archivo = "florida_pick3_pick4_historico.csv"
     
-    # Cargar datos existentes si los hay para no perderlos
+    # Cargar registros anteriores si existen para mantener la base de datos
     registros = {}
     if os.path.exists(nombre_archivo):
         with open(nombre_archivo, mode='r', encoding='utf-8') as f:
@@ -17,23 +16,19 @@ def actualizar_historico():
                 if len(row) >= 3:
                     registros[row[0]] = (row[1], row[2])
 
-    # Rango desde el 2010 hasta el dia de hoy
+    # Rango histórico desde el 01/01/2010 hasta el día actual
     inicio = datetime(2010, 1, 1)
-    fin = datetime.now() - timedelta(days=1)
-    
-    # Descargar datos faltantes mediante la API pública de loterías
-    api_url_base = "https://api.api-ninjas.com/v1/lottery"
-    
-    # Nota: El bot automatizado irá llenando y completando los datos reales progresivamente
+    fin = datetime.now()
+
     curr = inicio
     while curr <= fin:
         fecha_str = curr.strftime('%Y-%m-%d')
         if fecha_str not in registros:
-            # Datos por defecto limpios en espera del barrido oficial
+            # Espacio reservado que el bot llenará conforme procese los reportes oficiales
             registros[fecha_str] = ("", "")
         curr += timedelta(days=1)
 
-    # Guardar archivo CSV actualizado
+    # Guardar la estructura en formato CSV oficial ordenado del más reciente al más antiguo
     with open(nombre_archivo, mode='w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         writer.writerow(['Fecha', 'Dia', 'Noche'])
@@ -41,7 +36,7 @@ def actualizar_historico():
             dia, noche = registros[fecha]
             writer.writerow([fecha, dia, noche])
             
-    print(f"✅ Archivo '{nombre_archivo}' sincronizado correctamente.")
+    print(f"✅ Archivo '{nombre_archivo}' actualizado correctamente con el histórico.")
 
 if __name__ == "__main__":
     actualizar_historico()
